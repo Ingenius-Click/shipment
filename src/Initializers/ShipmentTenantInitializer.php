@@ -36,9 +36,11 @@ class ShipmentTenantInitializer implements TenantInitializer
 
             $shippingMethodData = $this->createLocalPickupShippingMethod($tenant);
 
-            $shippingMethodData->setConfigData([
+            $shippingMethodData->calculation_data = [
                 'pickup_address' => $pickupAddress,
-            ]);
+            ];
+
+            $shippingMethodData->save();
 
             $this->activateLocalPickupShippingMethod($shippingMethodData);
         }
@@ -73,7 +75,17 @@ class ShipmentTenantInitializer implements TenantInitializer
         ];
 
         $localPickupMethod = new LocalPickupMethod();
-        $rules = array_merge($rules, $localPickupMethod->configDataRules());
+
+        $localPickupRules = $localPickupMethod->configDataRules();
+
+        //replace for each rule in the value all required with required_if:enable_local_pickup,true
+        foreach ($localPickupRules as $key => $rule) {
+            if (str_contains($rule, 'required')) {
+                $localPickupRules[$key] = str_replace('required', 'required_if:enable_local_pickup,true', $rule);
+            }
+        }
+
+        $rules = array_merge($rules, $localPickupRules);
 
         return $rules;
     }

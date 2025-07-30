@@ -4,6 +4,7 @@ namespace Ingenius\Shipment\ShippingMethods;
 
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -47,7 +48,8 @@ abstract class AbstractShippingMethod implements Arrayable, Jsonable, JsonSerial
     protected function init(): void
     {
         if (!Schema::hasTable($this->table)) {
-            throw new NoShippingMethodTableException('Shipping methods table not found');
+            Log::info('Shipping methods table not found');
+            return;
         }
 
         $shippingMethodData = ShippingMethodData::where('shipping_method_id', $this->id)->first();
