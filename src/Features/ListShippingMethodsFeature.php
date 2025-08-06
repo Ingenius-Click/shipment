@@ -13,7 +13,12 @@ class ListShippingMethodsFeature implements FeatureInterface
 
     public function getName(): string
     {
-        return 'List shipping methods';
+        return __('List shipping methods');
+    }
+
+    public function getGroup(): string
+    {
+        return __('Shipment');
     }
 
     public function getPackage(): string

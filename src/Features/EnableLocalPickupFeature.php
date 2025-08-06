@@ -13,7 +13,12 @@ class EnableLocalPickupFeature implements FeatureInterface
 
     public function getName(): string
     {
-        return 'Enable local pickup';
+        return __('Enable local pickup');
+    }
+
+    public function getGroup(): string
+    {
+        return __('Shipment');
     }
 
     public function getPackage(): string

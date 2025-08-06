@@ -13,7 +13,12 @@ class ConfigureShippingMethodFeature implements FeatureInterface
 
     public function getName(): string
     {
-        return 'Configure shipping method';
+        return __('Configure shipping method');
+    }
+
+    public function getGroup(): string
+    {
+        return __('Shipment');
     }
 
     public function getPackage(): string

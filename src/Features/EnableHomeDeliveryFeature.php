@@ -13,7 +13,12 @@ class EnableHomeDeliveryFeature implements FeatureInterface
 
     public function getName(): string
     {
-        return 'Enable home delivery';
+        return __('Enable home delivery');
+    }
+
+    public function getGroup(): string
+    {
+        return __('Shipment');
     }
 
     public function getPackage(): string

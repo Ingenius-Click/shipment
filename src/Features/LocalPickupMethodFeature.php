@@ -13,7 +13,12 @@ class LocalPickupMethodFeature implements FeatureInterface
 
     public function getName(): string
     {
-        return 'Local pickup method';
+        return __('Local pickup method');
+    }
+
+    public function getGroup(): string
+    {
+        return __('Shipment');
     }
 
     public function getPackage(): string

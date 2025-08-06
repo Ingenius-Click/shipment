@@ -13,7 +13,12 @@ class SelectHomeDeliveryMethodFeature implements FeatureInterface
 
     public function getName(): string
     {
-        return 'Select home delivery method';
+        return __('Select home delivery method');
+    }
+
+    public function getGroup(): string
+    {
+        return __('Shipment');
     }
 
     public function getPackage(): string
