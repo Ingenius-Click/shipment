@@ -8,7 +8,9 @@ use Ingenius\Core\Support\TenantInitializationManager;
 use Ingenius\Core\Traits\RegistersMigrations;
 use Ingenius\Core\Traits\RegistersConfigurations;
 use Ingenius\Orders\Services\OrderExtensionManager;
+use Ingenius\Orders\Services\InvoiceDataManager;
 use Ingenius\Shipment\Extra\ShipmentExtensionForOrderCreation;
+use Ingenius\Shipment\InvoiceData\ShipmentInvoiceDataProvider;
 use Ingenius\Shipment\Features\ConfigureShippingMethodFeature;
 use Ingenius\Shipment\Features\EnableHomeDeliveryFeature;
 use Ingenius\Shipment\Features\EnableLocalPickupFeature;
@@ -62,6 +64,11 @@ class ShipmentServiceProvider extends ServiceProvider
         $this->app->afterResolving(OrderExtensionManager::class, function (OrderExtensionManager $manager) {
             $manager->register(new ShipmentExtensionForOrderCreation($this->app->make(ShippingStrategyManager::class)));
         });
+
+        // Register the invoice data provider
+        $this->app->afterResolving(InvoiceDataManager::class, function (InvoiceDataManager $manager) {
+            $manager->register(new ShipmentInvoiceDataProvider($this->app->make(ShippingMethodsManager::class)));
+        });
     }
 
     /**
@@ -69,6 +76,9 @@ class ShipmentServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register translations
+        $this->registerTranslations();
+
         // Register migrations with the registry
         $this->registerMigrations(__DIR__ . '/../../database/migrations', 'shipment');
 
@@ -78,8 +88,19 @@ class ShipmentServiceProvider extends ServiceProvider
             $this->registerTenantMigrations($tenantMigrationsPath, 'shipment');
         }
 
-        // Load views
-        $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'shipment');
+        // Load views only if they exist
+        $viewsPath = __DIR__ . '/../../resources/views';
+        if (is_dir($viewsPath) && count(glob($viewsPath . '/*.blade.php')) > 0) {
+            $this->loadViewsFrom($viewsPath, 'shipment');
+            
+            // Publish views only if they exist
+            $this->publishes([
+                $viewsPath => resource_path('views/vendor/shipment'),
+            ], 'shipment-views');
+        }
+
+        // Load translations
+        $this->loadTranslationsFrom(__DIR__ . '/../../resources/lang', 'shipment');
 
         // Load migrations
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
@@ -89,10 +110,10 @@ class ShipmentServiceProvider extends ServiceProvider
             __DIR__ . '/../../config/shipment.php' => config_path('shipment.php'),
         ], 'shipment-config');
 
-        // Publish views
+        // Publish translations
         $this->publishes([
-            __DIR__ . '/../../resources/views' => resource_path('views/vendor/shipment'),
-        ], 'shipment-views');
+            __DIR__ . '/../../resources/lang' => lang_path('vendor/shipment'),
+        ], 'shipment-translations');
 
         // Publish migrations
         $this->publishes([
@@ -119,5 +140,11 @@ class ShipmentServiceProvider extends ServiceProvider
             $initializer = $this->app->make(ShipmentTenantInitializer::class);
             $manager->register($initializer);
         });
+    }
+
+    protected function registerTranslations(): void
+    {
+        $this->loadTranslationsFrom(__DIR__ . '/../../resources/lang', 'shipment');
+        $this->loadJsonTranslationsFrom(__DIR__ . '/../../resources/lang', 'shipment');
     }
 }

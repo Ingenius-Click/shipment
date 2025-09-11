@@ -44,4 +44,19 @@ class LocalPickupMethod extends AbstractShippingMethod
             'pickup_address' => 'required|string',
         ];
     }
+
+    public function renderFormData(): array
+    {
+        return [
+            [
+                'field' => 'pickup_address',
+                'type' => 'text',
+                'label' => __('Pickup Address'),
+                'placeholder' => __('Enter pickup address'),
+                'required' => true,
+                'value' => $this->getConfigData()['pickup_address'],
+                'disabled' => true,
+            ],
+        ];
+    }
 }

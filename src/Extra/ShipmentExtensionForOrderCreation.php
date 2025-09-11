@@ -109,7 +109,7 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
         $shipment = Shipment::where('shippable_id', $order->id)->where('shippable_type', $orderClass)->first();
 
         if ($shipment) {
-            return $shipment->base_amount;
+            return $currentSubtotal + $shipment->base_amount;
         }
 
         return $currentSubtotal;

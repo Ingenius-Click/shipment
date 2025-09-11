@@ -73,6 +73,11 @@ abstract class AbstractShippingMethod implements Arrayable, Jsonable, JsonSerial
         return $this->calculationData;
     }
 
+    public function renderFormData(): array
+    {
+        return [];
+    }
+
     protected function getDefaultConfigData(): array
     {
         return [];
@@ -136,8 +141,9 @@ abstract class AbstractShippingMethod implements Arrayable, Jsonable, JsonSerial
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
-            'config_data' => $this->getConfigData(),
+            'name' => __($this->name),
+            'calculation_data_rules' => $this->rules(),
+            'calculation_data_form' => $this->renderFormData(),
         ];
     }
 
