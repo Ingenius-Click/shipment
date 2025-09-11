@@ -21,9 +21,11 @@ class ShipmentTenantInitializer implements TenantInitializer
 
             $shippingMethodData = $this->createLocalPickupShippingMethod($tenant);
 
-            $shippingMethodData->setConfigData([
+            $shippingMethodData->calculation_data = [
                 'pickup_address' => $pickupAddress,
-            ]);
+            ];
+
+            $shippingMethodData->save();
 
             $this->activateLocalPickupShippingMethod($shippingMethodData);
         }

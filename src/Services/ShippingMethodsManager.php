@@ -21,6 +21,17 @@ class ShippingMethodsManager
         $this->shippingMethods[$shipping_method_id] = $shipping_method_class;
     }
 
+    public function getShippingMethodNoQuestionAsk(string $shipping_method_id): AbstractShippingMethod
+    {
+        $shippingMethod = $this->shippingMethods[$shipping_method_id] ?? null;
+
+        if (!$shippingMethod) {
+            throw new ShippingMethodNotFoundException("Shipping method not found: {$shipping_method_id}");
+        }
+
+        return new $shippingMethod();
+    }
+
     public function getShippingMethod(string $shipping_method_id, bool $ignoreIsConfigured = false): AbstractShippingMethod
     {
         $shippingMethod = $this->shippingMethods[$shipping_method_id] ?? null;
