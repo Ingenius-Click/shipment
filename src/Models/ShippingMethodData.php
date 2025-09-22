@@ -3,6 +3,8 @@
 namespace Ingenius\Shipment\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Ingenius\Shipment\Services\ShippingMethodsManager;
+use Ingenius\Shipment\ShippingMethods\AbstractShippingMethod;
 
 class ShippingMethodData extends Model
 {

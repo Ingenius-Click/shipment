@@ -4,6 +4,7 @@ namespace Ingenius\Shipment\Http\Controllers;
 
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Response;
 use Ingenius\Core\Http\Controllers\Controller;
 use Ingenius\Shipment\Http\Requests\ConfigureShippingMethodRequest;
 use Ingenius\Shipment\Http\Requests\SelectShippingMethodRequest;
@@ -19,7 +20,7 @@ class ShippingMethodsController extends Controller
     {
         $shippingMethods = $shippingMethodsManager->getActivesShippingMethods();
 
-        return response()->api(message: 'Shipping methods fetched successfully', data: $shippingMethods);
+        return Response::api(message: 'Shipping methods fetched successfully', data: $shippingMethods);
     }
 
 
@@ -31,21 +32,21 @@ class ShippingMethodsController extends Controller
 
         $shippingMethod->setConfigData($request->except('shipping_method_id'));
 
-        return response()->api(message: 'Shipping method configured successfully');
+        return Response::api(message: 'Shipping method configured successfully');
     }
 
     public function selectLocalPickupMethod(SelectShippingMethodRequest $request, ShippingStrategyManager $shippingStrategyManager): JsonResponse
     {
         $shippingStrategyManager->setLocalPickupMethod($request->shipping_method_id);
 
-        return response()->api(message: 'Local pickup method selected successfully');
+        return Response::api(message: 'Local pickup method selected successfully');
     }
 
     public function selectHomeDeliveryMethod(SelectShippingMethodRequest $request, ShippingStrategyManager $shippingStrategyManager): JsonResponse
     {
         $shippingStrategyManager->setHomeDeliveryMethod($request->shipping_method_id);
 
-        return response()->api(message: 'Home delivery method selected successfully');
+        return Response::api(message: 'Home delivery method selected successfully');
     }
 
     public function enableLocalPickup(): JsonResponse
@@ -55,7 +56,7 @@ class ShippingMethodsController extends Controller
         $shippingSettings->local_pickup_enabled = true;
         $shippingSettings->save();
 
-        return response()->api(message: 'Local pickup enabled successfully');
+        return Response::api(message: 'Local pickup enabled successfully');
     }
 
     public function enableHomeDelivery(): JsonResponse
@@ -65,6 +66,6 @@ class ShippingMethodsController extends Controller
         $shippingSettings->home_delivery_enabled = true;
         $shippingSettings->save();
 
-        return response()->api(message: 'Home delivery enabled successfully');
+        return Response::api(message: 'Home delivery enabled successfully');
     }
 }
