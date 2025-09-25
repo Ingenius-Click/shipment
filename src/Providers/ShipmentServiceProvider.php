@@ -22,6 +22,7 @@ use Ingenius\Shipment\Initializers\ShipmentTenantInitializer;
 use Ingenius\Shipment\Services\ShippingMethodsManager;
 use Ingenius\Shipment\Services\ShippingStrategyManager;
 use Ingenius\Shipment\ShippingMethods\LocalPickupMethod;
+use Ingenius\Shipment\Console\Commands\SeedZonesCommand;
 
 class ShipmentServiceProvider extends ServiceProvider
 {
@@ -122,6 +123,13 @@ class ShipmentServiceProvider extends ServiceProvider
 
         // Register tenant initializer
         $this->registerTenantInitializer();
+
+        // Register console commands
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                SeedZonesCommand::class,
+            ]);
+        }
     }
 
     public function registerShippingMethods(): void

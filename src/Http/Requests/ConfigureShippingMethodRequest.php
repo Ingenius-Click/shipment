@@ -14,10 +14,7 @@ class ConfigureShippingMethodRequest extends FormRequest
 
     public function rules(): array
     {
-        $shippingMethodTable = config('shipment.shipping_methods_table', 'shipping_methods');
-
         return [
-            'shipping_method_id' => 'required|string|exists:' . $shippingMethodTable . ',shipping_method_id',
             ...$this->shipping_method_id ? $this->getRules() : [],
         ];
     }

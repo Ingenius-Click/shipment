@@ -4,8 +4,10 @@ namespace Ingenius\Shipment\Http\Controllers;
 
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Ingenius\Core\Http\Controllers\Controller;
+use Ingenius\Shipment\Exceptions\ShippingMethodNotActiveException;
 use Ingenius\Shipment\Http\Requests\ConfigureShippingMethodRequest;
 use Ingenius\Shipment\Http\Requests\SelectShippingMethodRequest;
 use Ingenius\Shipment\Services\ShippingMethodsManager;
@@ -16,19 +18,36 @@ class ShippingMethodsController extends Controller
 {
     use AuthorizesRequests;
 
-    public function actives(ShippingMethodsManager $shippingMethodsManager): JsonResponse
+    public function actives(Request $request, ShippingMethodsManager $shippingMethodsManager): JsonResponse
     {
-        $shippingMethods = $shippingMethodsManager->getActivesShippingMethods();
+        $shippingTypes = implode(',', array_map(fn($type) => $type->value, \Ingenius\Shipment\Enums\ShippingTypes::cases()));
+
+        $validated = $request->validate([
+            'type' => "nullable|in:$shippingTypes"
+        ]);
+
+        $shippingMethods = $shippingMethodsManager->getActivesShippingMethods($validated['type'] ?? '');
 
         return Response::api(message: 'Shipping methods fetched successfully', data: $shippingMethods);
     }
 
+    public function show(Request $request, string $shipping_method_id, ShippingMethodsManager $shippingMethodsManager): JsonResponse
+    {
+        $shippingMethod = $shippingMethodsManager->getShippingMethod($shipping_method_id, true);
 
-    public function configureShippingMethod(ConfigureShippingMethodRequest $request): JsonResponse
+        return Response::api(data: [
+            'id' => $shippingMethod->getId(),
+            'name' => $shippingMethod->getName(),
+            'config_data_rules' => $shippingMethod->configDataRules(),
+            'config_data' => $shippingMethod->getConfigData()
+        ], message: 'Shipping method fetched sucessfully');
+    }
+
+    public function configureShippingMethod(ConfigureShippingMethodRequest $request, string $shipping_method_id): JsonResponse
     {
         $shippingMethodsManager = app(ShippingMethodsManager::class);
 
-        $shippingMethod = $shippingMethodsManager->getShippingMethod($request->shipping_method_id, true);
+        $shippingMethod = $shippingMethodsManager->getShippingMethod($shipping_method_id, true);
 
         $shippingMethod->setConfigData($request->except('shipping_method_id'));
 

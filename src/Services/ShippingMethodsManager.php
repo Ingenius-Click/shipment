@@ -57,7 +57,7 @@ class ShippingMethodsManager
         return $shippingMethod;
     }
 
-    public function getActivesShippingMethods(): array
+    public function getActivesShippingMethods(string $type = ''): array
     {
 
         $instances = array_map(function ($shippingMethod) {
@@ -71,6 +71,12 @@ class ShippingMethodsManager
         $activeShippingMethods = array_filter($featureAccessibleShippingMethods, function ($shippingMethod) {
             return $shippingMethod->getActive();
         });
+
+        if ($type) {
+            $activeShippingMethods = array_filter($activeShippingMethods, function ($shippingMethod) use ($type) {
+                return $shippingMethod->getType()->value === $type;
+            });
+        }
 
         return $activeShippingMethods;
     }
