@@ -31,6 +31,13 @@ class ShippingMethodsController extends Controller
         return Response::api(message: 'Shipping methods fetched successfully', data: $shippingMethods);
     }
 
+    public function index(Request $request, ShippingMethodsManager $shippingMethodsManager): JsonResponse 
+    {
+        $shippingMethods = $shippingMethodsManager->getAvailableShippingMethods();
+
+        return Response::api(message: 'Shipping methods fetched successfully', data: $shippingMethods);
+    }
+
     public function show(Request $request, string $shipping_method_id, ShippingMethodsManager $shippingMethodsManager): JsonResponse
     {
         $shippingMethod = $shippingMethodsManager->getShippingMethod($shipping_method_id, true);
@@ -39,7 +46,8 @@ class ShippingMethodsController extends Controller
             'id' => $shippingMethod->getId(),
             'name' => $shippingMethod->getName(),
             'config_data_rules' => $shippingMethod->configDataRules(),
-            'config_data' => $shippingMethod->getConfigData()
+            'config_data' => $shippingMethod->getConfigData(),
+            'config_external_data' => $shippingMethod->configExternalData(),
         ], message: 'Shipping method fetched sucessfully');
     }
 

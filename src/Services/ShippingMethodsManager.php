@@ -32,6 +32,19 @@ class ShippingMethodsManager
         return new $shippingMethod();
     }
 
+    public function getAvailableShippingMethods(): array
+    {
+        $instances = array_map(function ($shippingMethod) {
+            return new $shippingMethod();
+        }, array_values($this->shippingMethods));
+
+        $featureAccessibleShippingMethods = array_filter($instances, function ($shippingMethod) {
+            return tenant() && tenant()->hasFeature($shippingMethod->getRequiredFeature()->getIdentifier());
+        });
+
+        return $featureAccessibleShippingMethods;
+    }
+
     public function getShippingMethod(string $shipping_method_id, bool $ignoreIsConfigured = false): AbstractShippingMethod
     {
         $shippingMethod = $this->shippingMethods[$shipping_method_id] ?? null;
@@ -69,7 +82,7 @@ class ShippingMethodsManager
         });
 
         $activeShippingMethods = array_filter($featureAccessibleShippingMethods, function ($shippingMethod) {
-            return $shippingMethod->getActive();
+            return $shippingMethod->getActive() && $shippingMethod->configured();
         });
 
         if ($type) {
@@ -78,6 +91,6 @@ class ShippingMethodsManager
             });
         }
 
-        return $activeShippingMethods;
+        return array_values($activeShippingMethods);
     }
 }

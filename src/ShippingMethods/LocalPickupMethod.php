@@ -14,6 +14,11 @@ class LocalPickupMethod extends AbstractShippingMethod
 
     protected $name = 'Local Pickup';
 
+    public function getName(): string
+    {
+        return __($this->name);
+    }
+
     public function getRequiredFeature(): FeatureInterface
     {
         return new LocalPickupMethodFeature();

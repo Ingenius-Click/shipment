@@ -4,16 +4,15 @@ namespace Ingenius\Shipment\Features;
 
 use Ingenius\Core\Interfaces\FeatureInterface;
 
-class EnableHomeDeliveryFeature implements FeatureInterface
-{
+class ProvinceAndMunicipalityMethodFeature implements FeatureInterface {
     public function getIdentifier(): string
     {
-        return 'enable-home-delivery';
+        return 'province-municipality-method';
     }
 
     public function getName(): string
     {
-        return __('Enable home delivery');
+        return __('Province and Municipality method');
     }
 
     public function getGroup(): string

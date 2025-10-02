@@ -2,6 +2,7 @@
 
 namespace Ingenius\Shipment\Providers;
 
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Ingenius\Core\Services\FeatureManager;
 use Ingenius\Core\Support\TenantInitializationManager;
@@ -10,6 +11,7 @@ use Ingenius\Core\Traits\RegistersConfigurations;
 use Ingenius\Orders\Services\OrderExtensionManager;
 use Ingenius\Orders\Services\InvoiceDataManager;
 use Ingenius\Shipment\Extra\ShipmentExtensionForOrderCreation;
+use Ingenius\Shipment\Features\ProvinceAndMunicipalityMethodFeature;
 use Ingenius\Shipment\InvoiceData\ShipmentInvoiceDataProvider;
 use Ingenius\Shipment\Features\ConfigureShippingMethodFeature;
 use Ingenius\Shipment\Features\EnableHomeDeliveryFeature;
@@ -19,10 +21,13 @@ use Ingenius\Shipment\Features\LocalPickupMethodFeature;
 use Ingenius\Shipment\Features\SelectHomeDeliveryMethodFeature;
 use Ingenius\Shipment\Features\SelectLocalPickupMethodFeature;
 use Ingenius\Shipment\Initializers\ShipmentTenantInitializer;
+use Ingenius\Shipment\Rules\ZoneCostRequiredIfParentHasNoCost;
+use Ingenius\Shipment\Rules\ZoneConfigurationValid;
 use Ingenius\Shipment\Services\ShippingMethodsManager;
 use Ingenius\Shipment\Services\ShippingStrategyManager;
 use Ingenius\Shipment\ShippingMethods\LocalPickupMethod;
 use Ingenius\Shipment\Console\Commands\SeedZonesCommand;
+use Ingenius\Shipment\ShippingMethods\ProvinceAndMunicipalityShippingMethod;
 
 class ShipmentServiceProvider extends ServiceProvider
 {
@@ -40,6 +45,7 @@ class ShipmentServiceProvider extends ServiceProvider
 
         // Register the route service provider
         $this->app->register(RouteServiceProvider::class);
+        $this->app->register(PermissionsServiceProvider::class);
 
         $this->app->singleton(ShippingMethodsManager::class, function () {
             return new ShippingMethodsManager();
@@ -59,6 +65,7 @@ class ShipmentServiceProvider extends ServiceProvider
             $manager->register(new SelectHomeDeliveryMethodFeature());
             $manager->register(new EnableLocalPickupFeature());
             $manager->register(new EnableHomeDeliveryFeature());
+            $manager->register(new ProvinceAndMunicipalityMethodFeature());
         });
 
         // Register the order extension
@@ -124,6 +131,9 @@ class ShipmentServiceProvider extends ServiceProvider
         // Register tenant initializer
         $this->registerTenantInitializer();
 
+        // Register custom validation rules
+        $this->registerValidationRules();
+
         // Register console commands
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -136,6 +146,7 @@ class ShipmentServiceProvider extends ServiceProvider
     {
         $this->app->afterResolving(ShippingMethodsManager::class, function (ShippingMethodsManager $manager) {
             $manager->registerShippingMethod('local_pickup', LocalPickupMethod::class);
+            $manager->registerShippingMethod('province_and_municipality', ProvinceAndMunicipalityShippingMethod::class);
         });
     }
 
@@ -154,5 +165,44 @@ class ShipmentServiceProvider extends ServiceProvider
     {
         $this->loadTranslationsFrom(__DIR__ . '/../../resources/lang', 'shipment');
         $this->loadJsonTranslationsFrom(__DIR__ . '/../../resources/lang', 'shipment');
+    }
+
+    protected function registerValidationRules(): void
+    {
+        Validator::extend('zone_cost_required_if_parent_has_no_cost', function ($attribute, $value, $parameters, $validator) {
+            $rule = new ZoneCostRequiredIfParentHasNoCost();
+            $rule->setData($validator->getData());
+
+            $passed = true;
+            $rule->validate($attribute, $value, function ($message) use (&$passed) {
+                $passed = false;
+            });
+
+            return $passed;
+        });
+
+        Validator::extend('zone_configuration_valid', function ($attribute, $value, $parameters, $validator) {
+            $rule = new ZoneConfigurationValid();
+            $rule->setData($validator->getData());
+
+            $passed = true;
+            $rule->validate($attribute, $value, function ($message) use (&$passed) {
+                $passed = false;
+            });
+
+            return $passed;
+        });
+
+        Validator::replacer('zone_configuration_valid', function ($message, $attribute, $rule, $parameters, $validator) {
+            $ruleInstance = new ZoneConfigurationValid();
+            $ruleInstance->setData($validator->getData());
+
+            $errorMessage = '';
+            $ruleInstance->validate($attribute, $validator->getData()[$attribute] ?? null, function ($message) use (&$errorMessage) {
+                $errorMessage = $message;
+            });
+
+            return $errorMessage ?: __('The selected :attribute is invalid.', ['attribute' => $attribute]);
+        });
     }
 }

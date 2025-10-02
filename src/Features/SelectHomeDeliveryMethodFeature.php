@@ -28,6 +28,6 @@ class SelectHomeDeliveryMethodFeature implements FeatureInterface
 
     public function isBasic(): bool
     {
-        return false;
+        return true;
     }
 }

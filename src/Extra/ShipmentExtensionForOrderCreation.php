@@ -88,6 +88,9 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
             'base_amount' => $calculationData->price
         ]);
 
+        //Update subtotal in context
+        $context['subtotal'] = ($context['subtotal'] ?? 0) + $calculationData->price;
+
         return [
             'amount' => $calculationData->price,
             'base_currency_code' => $calculationData->base_currency_code,

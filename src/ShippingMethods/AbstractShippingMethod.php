@@ -117,9 +117,13 @@ abstract class AbstractShippingMethod implements Arrayable, Jsonable, JsonSerial
         return [];
     }
 
+    public function configExternalData(): array {
+        return [];
+    }
+
     public function configured(): bool
     {
-        return $this->isDataValid($this->calculationData);
+        return $this->isDataValid($this->getConfigData());
     }
 
     public function isDataValid(array $data): bool
@@ -142,6 +146,7 @@ abstract class AbstractShippingMethod implements Arrayable, Jsonable, JsonSerial
         return [
             'id' => $this->id,
             'name' => __($this->name),
+            'configured' => $this->configured(),
             'calculation_data_rules' => $this->rules(),
             'calculation_data_form' => $this->renderFormData(),
         ];
