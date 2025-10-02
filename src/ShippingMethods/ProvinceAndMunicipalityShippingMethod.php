@@ -94,22 +94,53 @@ class ProvinceAndMunicipalityShippingMethod extends AbstractShippingMethod
     }
 
     public function renderFormData(): array {
+        // Get active municipalities
+        $activeMunicipalities = Zone::active()->municipalities()->with('parent')->get();
+
+        // Get provinces that have at least one active municipality
+        $provincesWithActiveMunicipalities = $activeMunicipalities
+            ->pluck('parent')
+            ->filter()
+            ->unique('id')
+            ->sortBy('name')
+            ->map(function ($province) {
+                return [
+                    'label' => $province->name,
+                    'value' => $province->name,
+                ];
+            })
+            ->values();
+
+        // Get all active municipalities grouped by province
+        $municipalitiesOptions = $activeMunicipalities
+            ->sortBy('name')
+            ->map(function ($municipality) {
+                return [
+                    'label' => $municipality->name,
+                    'value' => $municipality->name,
+                    'province' => $municipality->parent?->name,
+                ];
+            })
+            ->values();
+
         return [
             [
                 'field' => 'province',
-                'type' => 'text',
+                'type' => 'select',
                 'label' => __('Province'),
-                'placeholder' => __('Enter province'),
+                'placeholder' => __('Select province'),
                 'required' => true,
                 'disabled' => false,
+                'options' => $provincesWithActiveMunicipalities->toArray(),
             ],
             [
                 'field' => 'municipality',
-                'type' => 'text',
+                'type' => 'select',
                 'label' => __('Municipality'),
-                'placeholder' => __('Enter municipality'),
+                'placeholder' => __('Select municipality'),
                 'required' => true,
                 'disabled' => false,
+                'options' => $municipalitiesOptions->toArray(),
             ],
         ];
     }
