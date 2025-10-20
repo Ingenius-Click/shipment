@@ -7,7 +7,9 @@ use Illuminate\Support\Str;
 use Ingenius\Orders\Extensions\BaseOrderExtension;
 use Ingenius\Orders\Models\Order;
 use Ingenius\Shipment\Enums\ShippingTypes;
+use Ingenius\Shipment\Models\Beneficiary;
 use Ingenius\Shipment\Models\Shipment;
+use Ingenius\Shipment\Rules\BeneficiaryBelongsToUser;
 use Ingenius\Shipment\Services\ShippingStrategyManager;
 
 class ShipmentExtensionForOrderCreation extends BaseOrderExtension
@@ -20,13 +22,14 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
     {
         $rules = [
             'shipping_type' => 'required|string|in:' . implode(',', [ShippingTypes::LOCAL_PICKUP->value, ShippingTypes::HOME_DELIVERY->value]),
-            'beneficiary_name' => 'required|string',
-            'beneficiary_email' => 'required|email',
+            'beneficiary_id' => ['nullable', 'integer', 'exists:beneficiaries,id', new BeneficiaryBelongsToUser()],
+            'beneficiary_name' => 'required_without:beneficiary_id|string',
+            'beneficiary_email' => 'required_without:beneficiary_id|email',
             'beneficiary_city' => 'nullable|string',
             'beneficiary_state' => 'nullable|string',
             'beneficiary_zip' => 'nullable|string',
             'beneficiary_country' => 'nullable|string',
-            'beneficiary_phone' => 'required|string',
+            'beneficiary_phone' => 'required_without:beneficiary_id|string',
         ];
 
         $method = null;
@@ -52,6 +55,17 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
 
     public function processOrder(Order $order, array $validatedData, array &$context): array
     {
+        // If beneficiary_id is provided, load the beneficiary data
+        if (!empty($validatedData['beneficiary_id'])) {
+            $beneficiary = Beneficiary::find($validatedData['beneficiary_id']);
+            if ($beneficiary) {
+                // Copy beneficiary data to validated data
+                $validatedData['beneficiary_name'] = $beneficiary->name;
+                $validatedData['beneficiary_email'] = $beneficiary->email;
+                $validatedData['beneficiary_phone'] = $beneficiary->phone;
+            }
+        }
+
         //Obtener el shipping_type
         $shippingType = $validatedData['shipping_type'];
 

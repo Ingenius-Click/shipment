@@ -2,6 +2,7 @@
 
 namespace Ingenius\Shipment\Providers;
 
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Ingenius\Core\Services\FeatureManager;
@@ -27,6 +28,8 @@ use Ingenius\Shipment\Services\ShippingMethodsManager;
 use Ingenius\Shipment\Services\ShippingStrategyManager;
 use Ingenius\Shipment\ShippingMethods\LocalPickupMethod;
 use Ingenius\Shipment\Console\Commands\SeedZonesCommand;
+use Ingenius\Shipment\Models\Beneficiary;
+use Ingenius\Shipment\Policies\BeneficiaryPolicy;
 use Ingenius\Shipment\ShippingMethods\ProvinceAndMunicipalityShippingMethod;
 
 class ShipmentServiceProvider extends ServiceProvider
@@ -131,6 +134,9 @@ class ShipmentServiceProvider extends ServiceProvider
         // Register tenant initializer
         $this->registerTenantInitializer();
 
+        // Register policies
+        $this->registerPolicies();
+
         // Register custom validation rules
         $this->registerValidationRules();
 
@@ -165,6 +171,14 @@ class ShipmentServiceProvider extends ServiceProvider
     {
         $this->loadTranslationsFrom(__DIR__ . '/../../resources/lang', 'shipment');
         $this->loadJsonTranslationsFrom(__DIR__ . '/../../resources/lang', 'shipment');
+    }
+
+    /**
+     * Register policies
+     */
+    protected function registerPolicies(): void
+    {
+        Gate::policy(Beneficiary::class, BeneficiaryPolicy::class);
     }
 
     protected function registerValidationRules(): void
