@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Ingenius\Shipment\Http\Controllers\AddressController;
 use Ingenius\Shipment\Http\Controllers\BeneficiaryController;
 use Ingenius\Shipment\Http\Controllers\ShippingMethodsController;
 use Ingenius\Shipment\Http\Controllers\ZoneController;
@@ -39,6 +40,7 @@ Route::middleware([
             Route::put('zones/bulk-activation', [ZoneController::class, 'bulkActivation'])->name('shipping-zones.bulk-activation')->middleware('tenant.has.feature:configure-shipping-method');
 
             Route::apiResource('beneficiaries', BeneficiaryController::class);
+            Route::apiResource('addresses', AddressController::class);
         });
     });
 });

@@ -7,8 +7,10 @@ use Illuminate\Support\Str;
 use Ingenius\Orders\Extensions\BaseOrderExtension;
 use Ingenius\Orders\Models\Order;
 use Ingenius\Shipment\Enums\ShippingTypes;
+use Ingenius\Shipment\Models\Address;
 use Ingenius\Shipment\Models\Beneficiary;
 use Ingenius\Shipment\Models\Shipment;
+use Ingenius\Shipment\Rules\AddressBelongsToUser;
 use Ingenius\Shipment\Rules\BeneficiaryBelongsToUser;
 use Ingenius\Shipment\Services\ShippingStrategyManager;
 
@@ -37,7 +39,8 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
         if ($request->shipping_type && $request->shipping_type === ShippingTypes::HOME_DELIVERY->value) {
             $method = $this->shippingStrategyManager->getHomeDeliveryStrategy();
             $rules = array_merge($rules, [
-                'beneficiary_address' => 'required|string',
+                'address_id' => ['nullable', 'integer', 'exists:addresses,id', new AddressBelongsToUser()],
+                'beneficiary_address' => 'required_without:address_id|string',
             ]);
         } else if ($request->shipping_type && $request->shipping_type === ShippingTypes::LOCAL_PICKUP->value) {
             $method = $this->shippingStrategyManager->getLocalPickupStrategy();
@@ -63,6 +66,21 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
                 $validatedData['beneficiary_name'] = $beneficiary->name;
                 $validatedData['beneficiary_email'] = $beneficiary->email;
                 $validatedData['beneficiary_phone'] = $beneficiary->phone;
+            }
+        }
+
+        // If address_id is provided, load the address data
+        if (!empty($validatedData['address_id'])) {
+            $address = Address::find($validatedData['address_id']);
+            if ($address) {
+                // Copy address data to beneficiary_address field
+                // Format: address, municipality, province
+                $addressParts = [
+                    $address->address,
+                    $address->municipality,
+                    $address->province,
+                ];
+                $validatedData['beneficiary_address'] = implode(', ', array_filter($addressParts));
             }
         }
 
