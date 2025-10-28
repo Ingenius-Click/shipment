@@ -146,6 +146,7 @@ abstract class AbstractShippingMethod implements Arrayable, Jsonable, JsonSerial
         return [
             'id' => $this->id,
             'name' => __($this->name),
+            'type' => $this->getType()->value,
             'configured' => $this->configured(),
             'calculation_data_rules' => $this->rules(),
             'calculation_data_form' => $this->renderFormData(),

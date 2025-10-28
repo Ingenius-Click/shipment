@@ -141,7 +141,7 @@ class ProvinceAndMunicipalityShippingMethod extends AbstractShippingMethod
                 'required' => true,
                 'disabled' => false,
                 'options' => $municipalitiesOptions->toArray(),
-            ],
+            ]
         ];
     }
 } 
