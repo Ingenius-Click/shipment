@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Http\Request;
 use Ingenius\Core\Interfaces\TenantInitializer;
 use Ingenius\Core\Models\Tenant;
+use Ingenius\Shipment\Actions\SeedCubanZonesAction;
 use Ingenius\Shipment\Models\ShippingMethodData;
 use Ingenius\Shipment\ShippingMethods\LocalPickupMethod;
 
@@ -29,6 +30,9 @@ class ShipmentTenantInitializer implements TenantInitializer
 
             $this->activateLocalPickupShippingMethod($shippingMethodData);
         }
+
+        $command->info('Seeding shipping zones...');
+        $this->seedZones($tenant);
     }
 
     public function initializeViaRequest(Tenant $tenant, Request $request): void
@@ -46,6 +50,8 @@ class ShipmentTenantInitializer implements TenantInitializer
 
             $this->activateLocalPickupShippingMethod($shippingMethodData);
         }
+
+        $this->seedZones($tenant);
     }
 
     protected function activateLocalPickupShippingMethod(ShippingMethodData $shippingMethodData): void
@@ -68,6 +74,13 @@ class ShipmentTenantInitializer implements TenantInitializer
         }
 
         return $shippingMethod;
+    }
+
+    protected function seedZones(Tenant $tenant): void
+    {
+        $action = app(SeedCubanZonesAction::class);
+
+        $action->handle();
     }
 
     public function rules(): array
