@@ -25,6 +25,9 @@ Route::middleware([
     'api',
 ])->prefix('api')->group(function () {
     Route::prefix('shipment')->group(function () {
+
+        Route::post('calculate-shipping-cost', [ShippingMethodsController::class, 'calculateShippingCost'])->name('shipping-methods.calculate-shipping-cost');
+
         Route::get('shipping-methods/actives', [ShippingMethodsController::class, 'actives'])->name('shipping-methods.actives')->middleware('tenant.has.feature:list-shipping-methods');
 
         Route::middleware('tenant.user')->group(function () {

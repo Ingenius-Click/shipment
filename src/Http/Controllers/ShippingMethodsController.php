@@ -8,11 +8,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Ingenius\Core\Http\Controllers\Controller;
 use Ingenius\Shipment\Exceptions\ShippingMethodNotActiveException;
+use Ingenius\Shipment\Http\Requests\CalculateShippingCostRequest;
 use Ingenius\Shipment\Http\Requests\ConfigureShippingMethodRequest;
 use Ingenius\Shipment\Http\Requests\SelectShippingMethodRequest;
 use Ingenius\Shipment\Services\ShippingMethodsManager;
 use Ingenius\Shipment\Services\ShippingStrategyManager;
 use Ingenius\Shipment\Settings\ShippingSettings;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ShippingMethodsController extends Controller
 {
@@ -94,5 +96,19 @@ class ShippingMethodsController extends Controller
         $shippingSettings->save();
 
         return Response::api(message: 'Home delivery enabled successfully');
+    }
+
+    public function calculateShippingCost(CalculateShippingCostRequest $request): JsonResponse {
+        $method = $request->getShippingMethodInstance();
+
+        if(!$method) {
+            throw new NotFoundHttpException();
+        }
+
+        $cost = $method->calculate($request->validated());
+
+        return Response::api(message: 'Shipping cost calculated successfully', data: [
+            'shipping_cost' => $cost
+        ]);
     }
 }
