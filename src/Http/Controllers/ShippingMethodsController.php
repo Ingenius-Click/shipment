@@ -6,7 +6,9 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
+use Ingenius\Core\Helpers\AuthHelper;
 use Ingenius\Core\Http\Controllers\Controller;
+use Ingenius\Shipment\Constants\ShippingMethodsPermissions;
 use Ingenius\Shipment\Exceptions\ShippingMethodNotActiveException;
 use Ingenius\Shipment\Http\Requests\CalculateShippingCostRequest;
 use Ingenius\Shipment\Http\Requests\ConfigureShippingMethodRequest;
@@ -35,6 +37,8 @@ class ShippingMethodsController extends Controller
 
     public function index(Request $request, ShippingMethodsManager $shippingMethodsManager): JsonResponse 
     {
+        AuthHelper::checkPermission(ShippingMethodsPermissions::INDEX);
+
         $shippingMethods = $shippingMethodsManager->getAvailableShippingMethods();
 
         return Response::api(message: 'Shipping methods fetched successfully', data: $shippingMethods);
@@ -42,6 +46,8 @@ class ShippingMethodsController extends Controller
 
     public function show(Request $request, string $shipping_method_id, ShippingMethodsManager $shippingMethodsManager): JsonResponse
     {
+        AuthHelper::checkPermission(ShippingMethodsPermissions::SHOW);
+
         $shippingMethod = $shippingMethodsManager->getShippingMethod($shipping_method_id, true);
 
         return Response::api(data: [
@@ -55,6 +61,8 @@ class ShippingMethodsController extends Controller
 
     public function configureShippingMethod(ConfigureShippingMethodRequest $request, string $shipping_method_id): JsonResponse
     {
+        AuthHelper::checkPermission(ShippingMethodsPermissions::CONFIGURE);
+
         $shippingMethodsManager = app(ShippingMethodsManager::class);
 
         $shippingMethod = $shippingMethodsManager->getShippingMethod($shipping_method_id, true);
@@ -66,6 +74,8 @@ class ShippingMethodsController extends Controller
 
     public function selectLocalPickupMethod(SelectShippingMethodRequest $request, ShippingStrategyManager $shippingStrategyManager): JsonResponse
     {
+        AuthHelper::checkPermission(ShippingMethodsPermissions::CONFIGURE);
+
         $shippingStrategyManager->setLocalPickupMethod($request->shipping_method_id);
 
         return Response::api(message: 'Local pickup method selected successfully');
@@ -73,6 +83,8 @@ class ShippingMethodsController extends Controller
 
     public function selectHomeDeliveryMethod(SelectShippingMethodRequest $request, ShippingStrategyManager $shippingStrategyManager): JsonResponse
     {
+        AuthHelper::checkPermission(ShippingMethodsPermissions::CONFIGURE);
+
         $shippingStrategyManager->setHomeDeliveryMethod($request->shipping_method_id);
 
         return Response::api(message: 'Home delivery method selected successfully');
@@ -80,6 +92,8 @@ class ShippingMethodsController extends Controller
 
     public function enableLocalPickup(): JsonResponse
     {
+        AuthHelper::checkPermission(ShippingMethodsPermissions::CONFIGURE);
+
         $shippingSettings = app(ShippingSettings::class);
 
         $shippingSettings->local_pickup_enabled = true;
@@ -90,6 +104,8 @@ class ShippingMethodsController extends Controller
 
     public function enableHomeDelivery(): JsonResponse
     {
+        AuthHelper::checkPermission(ShippingMethodsPermissions::CONFIGURE);
+
         $shippingSettings = app(ShippingSettings::class);
 
         $shippingSettings->home_delivery_enabled = true;

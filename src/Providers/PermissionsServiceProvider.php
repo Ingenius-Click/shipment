@@ -5,6 +5,7 @@ namespace Ingenius\Shipment\Providers;
 use Illuminate\Support\ServiceProvider;
 use Ingenius\Core\Support\PermissionsManager;
 use Ingenius\Core\Traits\RegistersConfigurations;
+use Ingenius\Shipment\Constants\ShippingMethodsPermissions;
 use Ingenius\Shipment\Constants\ZonePermissions;
 
 class PermissionsServiceProvider extends ServiceProvider {
@@ -49,6 +50,12 @@ class PermissionsServiceProvider extends ServiceProvider {
         $permissionsManager->registerMany([
             ZonePermissions::INDEX => 'View zones',
             ZonePermissions::ACTIVATE => 'Activate zones',
+        ], $this->packageName, 'tenant');
+
+        $permissionsManager->registerMany([
+            ShippingMethodsPermissions::INDEX => 'View shipping methods',
+            ShippingMethodsPermissions::SHOW => 'View shipping method',
+            ShippingMethodsPermissions::CONFIGURE => 'Configure shipping method'
         ], $this->packageName, 'tenant');
     }
 
