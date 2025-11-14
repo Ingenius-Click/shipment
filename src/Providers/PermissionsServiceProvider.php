@@ -52,11 +52,32 @@ class PermissionsServiceProvider extends ServiceProvider {
             ZonePermissions::ACTIVATE => 'Activate zones',
         ], $this->packageName, 'tenant');
 
-        $permissionsManager->registerMany([
-            ShippingMethodsPermissions::INDEX => 'View shipping methods',
-            ShippingMethodsPermissions::SHOW => 'View shipping method',
-            ShippingMethodsPermissions::CONFIGURE => 'Configure shipping method'
-        ], $this->packageName, 'tenant');
+        $permissionsManager->register(
+            ShippingMethodsPermissions::INDEX,
+            'View shipping methods',
+            $this->packageName,
+            'tenant',
+            'View shipping methods',
+            'Shipment'
+        );
+
+        $permissionsManager->register(
+            ShippingMethodsPermissions::SHOW,
+            'View shipping method',
+            $this->packageName,
+            'tenant',
+            'View shipping method',
+            'Shipment'
+        );
+
+        $permissionsManager->register(
+            ShippingMethodsPermissions::CONFIGURE,
+            'Configure',
+            $this->packageName,
+            'tenant',
+            'Configure shipping method',
+            'Shipment'
+        );
     }
 
 }
