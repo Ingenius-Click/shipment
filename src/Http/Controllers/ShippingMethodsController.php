@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Ingenius\Core\Helpers\AuthHelper;
 use Ingenius\Core\Http\Controllers\Controller;
+use Ingenius\Core\Services\PackageHookManager;
 use Ingenius\Shipment\Constants\ShippingMethodsPermissions;
 use Ingenius\Shipment\Exceptions\ShippingMethodNotActiveException;
 use Ingenius\Shipment\Http\Requests\CalculateShippingCostRequest;
@@ -123,8 +124,17 @@ class ShippingMethodsController extends Controller
 
         $cost = $method->calculate($request->validated());
 
+        $hookManager = app(PackageHookManager::class);
+        $data = $hookManager->execute('shipping.cost.calculated', [
+            'shipping_method' => $method,
+            'calculated_cost' => $cost,
+        ], [
+            'request_data' => $request->validated(),
+        ]);
+
         return Response::api(message: 'Shipping cost calculated successfully', data: [
-            'shipping_cost' => $cost
+            'shipping_cost' => $cost,
+            'shipping_cost_data' => $data
         ]);
     }
 }

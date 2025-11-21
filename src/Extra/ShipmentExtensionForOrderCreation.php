@@ -58,6 +58,9 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
 
     public function processOrder(Order $order, array $validatedData, array &$context): array
     {
+
+        $free_shipping = $context['discount_free_shipping'] ?? false;
+
         // If beneficiary_id is provided, load the beneficiary data
         if (!empty($validatedData['beneficiary_id'])) {
             $beneficiary = Beneficiary::find($validatedData['beneficiary_id']);
@@ -99,6 +102,14 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
         //Calcular el costo del envío
         $calculationData = $method->calculate($validatedData);
 
+        //Calcular el precio real (considerando descuentos)
+        $realPrice = $free_shipping ? 0 : $calculationData->price;
+
+        $data = [
+            'calculation_data' => $calculationData,
+            'free_shipping' => $free_shipping,
+        ];
+
         //Crear el envío
         $shipment = Shipment::create([
             'shippable_id' => $order->id,
@@ -117,11 +128,39 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
             'base_currency_code' => $calculationData->base_currency_code,
             'currency_code' => $order->getCurrency(),
             'exchange_rate' => $order->getExchangeRate(),
-            'base_amount' => $calculationData->price
+            'base_amount' => $realPrice,
+            'data' => $data
         ]);
 
+        // If there's a free shipping discount usage instance, complete and save it
+        if ($free_shipping && !empty($context['discount_free_shipping_usage'])) {
+            $discountUsage = $context['discount_free_shipping_usage'];
+
+            // Set the discount amount (original shipping cost)
+            $discountUsage->discount_amount_applied = $calculationData->price;
+
+            // Add shipment info to metadata
+            $metadata = $discountUsage->metadata ?? [];
+            $metadata['shipment_id'] = $shipment->id;
+            $metadata['original_shipping_cost'] = $calculationData->price;
+            $discountUsage->metadata = $metadata;
+
+            // Save the discount usage
+            $discountUsage->save();
+
+            // Increment campaign usage counter
+            if (!empty($context['discount_free_shipping_campaign_id'])) {
+                // Get campaign model class from the usage instance's relationship
+                $campaignClass = get_class($discountUsage->campaign()->getRelated());
+                $campaign = $campaignClass::find($context['discount_free_shipping_campaign_id']);
+                if ($campaign) {
+                    $campaign->increment('current_uses');
+                }
+            }
+        }
+
         //Update subtotal in context
-        $context['subtotal'] = ($context['subtotal'] ?? 0) + $calculationData->price;
+        $context['subtotal'] = ($context['subtotal'] ?? 0) + $realPrice;
 
         return [
             'amount' => $calculationData->price,
