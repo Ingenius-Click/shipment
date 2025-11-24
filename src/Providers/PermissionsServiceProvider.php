@@ -46,19 +46,33 @@ class PermissionsServiceProvider extends ServiceProvider {
      */
     protected function registerPermissions(PermissionsManager $permissionsManager): void
     {
-        // Register Products package permissions
-        $permissionsManager->registerMany([
-            ZonePermissions::INDEX => 'View zones',
-            ZonePermissions::ACTIVATE => 'Activate zones',
-        ], $this->packageName, 'tenant');
+        // Zone permissions
+        $permissionsManager->register(
+            ZonePermissions::INDEX,
+            'View zones',
+            $this->packageName,
+            'tenant',
+            'View zones',
+            'Zones'
+        );
 
+        $permissionsManager->register(
+            ZonePermissions::ACTIVATE,
+            'Activate zones',
+            $this->packageName,
+            'tenant',
+            'Activate zones',
+            'Zones'
+        );
+
+        // Shipping Methods permissions
         $permissionsManager->register(
             ShippingMethodsPermissions::INDEX,
             'View shipping methods',
             $this->packageName,
             'tenant',
             'View shipping methods',
-            'Shipment'
+            'Shipping Methods'
         );
 
         $permissionsManager->register(
@@ -67,16 +81,16 @@ class PermissionsServiceProvider extends ServiceProvider {
             $this->packageName,
             'tenant',
             'View shipping method',
-            'Shipment'
+            'Shipping Methods'
         );
 
         $permissionsManager->register(
             ShippingMethodsPermissions::CONFIGURE,
-            'Configure',
+            'Configure shipping method',
             $this->packageName,
             'tenant',
             'Configure shipping method',
-            'Shipment'
+            'Shipping Methods'
         );
     }
 

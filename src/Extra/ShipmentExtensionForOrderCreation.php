@@ -13,6 +13,8 @@ use Ingenius\Shipment\Models\Shipment;
 use Ingenius\Shipment\Rules\AddressBelongsToUser;
 use Ingenius\Shipment\Rules\BeneficiaryBelongsToUser;
 use Ingenius\Shipment\Services\ShippingStrategyManager;
+use Ingenius\Discounts\Models\DiscountUsage;
+use Ingenius\Discounts\Models\DiscountCampaign;
 
 class ShipmentExtensionForOrderCreation extends BaseOrderExtension
 {
@@ -58,9 +60,6 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
 
     public function processOrder(Order $order, array $validatedData, array &$context): array
     {
-
-        $free_shipping = $context['discount_free_shipping'] ?? false;
-
         // If beneficiary_id is provided, load the beneficiary data
         if (!empty($validatedData['beneficiary_id'])) {
             $beneficiary = Beneficiary::find($validatedData['beneficiary_id']);
@@ -87,10 +86,8 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
             }
         }
 
-        //Obtener el shipping_type
+        // Get shipping type and method
         $shippingType = $validatedData['shipping_type'];
-
-        //Dependiendo del shipping_type, obtener el método de envío
         $method = null;
 
         if ($shippingType === ShippingTypes::HOME_DELIVERY->value) {
@@ -99,18 +96,20 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
             $method = $this->shippingStrategyManager->getLocalPickupStrategy();
         }
 
-        //Calcular el costo del envío
+        // Calculate shipping cost
         $calculationData = $method->calculate($validatedData);
+        $originalPrice = $calculationData->price;
 
-        //Calcular el precio real (considerando descuentos)
-        $realPrice = $free_shipping ? 0 : $calculationData->price;
+        // Calculate shipping discount if any
+        $shippingDiscountResult = $this->calculateShippingDiscount($originalPrice, $context);
+        $realPrice = $originalPrice - $shippingDiscountResult['total_discount'];
 
         $data = [
             'calculation_data' => $calculationData,
-            'free_shipping' => $free_shipping,
+            'shipping_discounts' => $shippingDiscountResult['applied_discounts'],
         ];
 
-        //Crear el envío
+        // Create shipment
         $shipment = Shipment::create([
             'shippable_id' => $order->id,
             'shippable_type' => Order::class,
@@ -132,38 +131,38 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
             'data' => $data
         ]);
 
-        // If there's a free shipping discount usage instance, complete and save it
-        if ($free_shipping && !empty($context['discount_free_shipping_usage'])) {
-            $discountUsage = $context['discount_free_shipping_usage'];
-
-            // Set the discount amount (original shipping cost)
-            $discountUsage->discount_amount_applied = $calculationData->price;
-
-            // Add shipment info to metadata
-            $metadata = $discountUsage->metadata ?? [];
-            $metadata['shipment_id'] = $shipment->id;
-            $metadata['original_shipping_cost'] = $calculationData->price;
-            $discountUsage->metadata = $metadata;
-
-            // Save the discount usage
-            $discountUsage->save();
+        // Register shipping discount usages
+        foreach ($shippingDiscountResult['applied_discounts'] as $discount) {
+            DiscountUsage::create([
+                'campaign_id' => $discount['campaign_id'],
+                'customer_id' => $order->userable_id,
+                'orderable_id' => $order->id,
+                'orderable_type' => get_class($order),
+                'discount_amount_applied' => $discount['amount_saved'],
+                'used_at' => now(),
+                'metadata' => [
+                    'campaign_name' => $discount['campaign_name'],
+                    'discount_type' => $discount['discount_type'],
+                    'shipment_id' => $shipment->id,
+                    'original_shipping_cost' => $originalPrice,
+                    'affected_items' => [],
+                ],
+            ]);
 
             // Increment campaign usage counter
-            if (!empty($context['discount_free_shipping_campaign_id'])) {
-                // Get campaign model class from the usage instance's relationship
-                $campaignClass = get_class($discountUsage->campaign()->getRelated());
-                $campaign = $campaignClass::find($context['discount_free_shipping_campaign_id']);
-                if ($campaign) {
-                    $campaign->increment('current_uses');
-                }
+            $campaign = DiscountCampaign::find($discount['campaign_id']);
+            if ($campaign) {
+                $campaign->increment('current_uses');
             }
         }
 
-        //Update subtotal in context
-        $context['subtotal'] = ($context['subtotal'] ?? 0) + $realPrice;
+        // Add shipping cost to total (after discounts)
+        $context['total'] = ($context['total'] ?? 0) + $realPrice;
 
         return [
-            'amount' => $calculationData->price,
+            'amount' => $originalPrice,
+            'discounted_amount' => $realPrice,
+            'discount_applied' => $shippingDiscountResult['total_discount'],
             'base_currency_code' => $calculationData->base_currency_code,
             'beneficiary_name' => $shipment->beneficiary_name,
             'beneficiary_email' => $shipment->beneficiary_email,
@@ -174,6 +173,57 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
             'beneficiary_country' => $shipment->beneficiary_country,
             'beneficiary_phone' => $shipment->beneficiary_phone,
             'pickup_address' => $shipment->pickup_address,
+        ];
+    }
+
+    /**
+     * Calculate shipping discount based on discounts in context
+     *
+     * @param int $shippingCost Original shipping cost in cents
+     * @param array $context Order context with shipping_discounts
+     * @return array ['total_discount' => int, 'applied_discounts' => array]
+     */
+    protected function calculateShippingDiscount(int $shippingCost, array $context): array
+    {
+        $shippingDiscounts = $context['shipping_discounts'] ?? [];
+        $appliedDiscounts = [];
+        $totalDiscount = 0;
+        $remainingCost = $shippingCost;
+
+        foreach ($shippingDiscounts as $discount) {
+            if ($remainingCost <= 0) {
+                break;
+            }
+
+            $discountType = $discount['discount_type'] ?? null;
+            $discountValue = $discount['discount_value'] ?? 0;
+            $amountSaved = 0;
+
+            if ($discountType === 'percentage') {
+                // Percentage discount (e.g., 100 = 100% = free shipping)
+                $amountSaved = (int) floor($remainingCost * ($discountValue / 100));
+            } elseif ($discountType === 'fixed_amount') {
+                // Fixed amount discount (e.g., 500 = $5 off)
+                $amountSaved = min($discountValue, $remainingCost);
+            }
+
+            if ($amountSaved > 0) {
+                $totalDiscount += $amountSaved;
+                $remainingCost -= $amountSaved;
+
+                $appliedDiscounts[] = [
+                    'campaign_id' => $discount['campaign_id'],
+                    'campaign_name' => $discount['campaign_name'],
+                    'discount_type' => $discountType,
+                    'discount_value' => $discountValue,
+                    'amount_saved' => $amountSaved,
+                ];
+            }
+        }
+
+        return [
+            'total_discount' => $totalDiscount,
+            'applied_discounts' => $appliedDiscounts,
         ];
     }
 

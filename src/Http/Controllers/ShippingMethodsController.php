@@ -125,10 +125,9 @@ class ShippingMethodsController extends Controller
         $cost = $method->calculate($request->validated());
 
         $hookManager = app(PackageHookManager::class);
-        $data = $hookManager->execute('shipping.cost.calculated', [
+        $data = $hookManager->execute('shipping.cost.calculated', [], [
             'shipping_method' => $method,
             'calculated_cost' => $cost,
-        ], [
             'request_data' => $request->validated(),
         ]);
 
