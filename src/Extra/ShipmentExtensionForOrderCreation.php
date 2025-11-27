@@ -248,6 +248,7 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
             'id' => $shipment->id,
             'tracking_number' => $shipment->tracking_number,
             'price' => $shipment->base_amount,
+            'price_converted' => $shipment->base_amount * $order->exchange_rate,
             'shipping_method_id' => $shipment->shipping_method_id,
             'beneficiary_name' => $shipment->beneficiary_name,
             'beneficiary_email' => $shipment->beneficiary_email,

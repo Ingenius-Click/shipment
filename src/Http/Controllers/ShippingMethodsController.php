@@ -122,8 +122,10 @@ class ShippingMethodsController extends Controller
             throw new NotFoundHttpException();
         }
 
+        // Calculate cost in base currency
         $cost = $method->calculate($request->validated());
 
+        // Execute hook - may apply discounts to shipping cost
         $hookManager = app(PackageHookManager::class);
         $data = $hookManager->execute('shipping.cost.calculated', [], [
             'shipping_method' => $method,
@@ -131,8 +133,11 @@ class ShippingMethodsController extends Controller
             'request_data' => $request->validated(),
         ]);
 
+        // Add currency metadata to data
+        $data['currency'] = get_currency_metadata();
+
         return Response::api(message: 'Shipping cost calculated successfully', data: [
-            'shipping_cost' => $cost,
+            'shipping_cost' => $cost,  // Keep base cost for calculations
             'shipping_cost_data' => $data
         ]);
     }
