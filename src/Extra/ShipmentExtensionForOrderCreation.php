@@ -4,6 +4,7 @@ namespace Ingenius\Shipment\Extra;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Ingenius\Coins\Services\CurrencyServices;
 use Ingenius\Orders\Extensions\BaseOrderExtension;
 use Ingenius\Orders\Models\Order;
 use Ingenius\Shipment\Enums\ShippingTypes;
@@ -244,11 +245,14 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
         $orderClass = get_class($order);
         $shipment = Shipment::where('shippable_id', $order->id)->where('shippable_type', $orderClass)->first();
 
+        $priceConverted = $shipment ? $shipment->base_amount * $order->exchange_rate : 0;
+
         $orderArray['shipment'] = [
             'id' => $shipment->id,
             'tracking_number' => $shipment->tracking_number,
             'price' => $shipment->base_amount,
-            'price_converted' => $shipment->base_amount * $order->exchange_rate,
+            'price_converted' => $priceConverted,
+            'price_formatted' => CurrencyServices::formatCurrency($priceConverted, $order->currency),
             'shipping_method_id' => $shipment->shipping_method_id,
             'beneficiary_name' => $shipment->beneficiary_name,
             'beneficiary_email' => $shipment->beneficiary_email,
