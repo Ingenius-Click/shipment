@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Ingenius\Core\Services\FeatureManager;
+use Ingenius\Core\Services\PackageHookManager;
 use Ingenius\Core\Support\TenantInitializationManager;
 use Ingenius\Core\Traits\RegistersMigrations;
 use Ingenius\Core\Traits\RegistersConfigurations;
@@ -28,6 +29,7 @@ use Ingenius\Shipment\Services\ShippingMethodsManager;
 use Ingenius\Shipment\Services\ShippingStrategyManager;
 use Ingenius\Shipment\ShippingMethods\LocalPickupMethod;
 use Ingenius\Shipment\Console\Commands\SeedZonesCommand;
+use Ingenius\Shipment\Models\Address;
 use Ingenius\Shipment\Models\Beneficiary;
 use Ingenius\Shipment\Policies\BeneficiaryPolicy;
 use Ingenius\Shipment\ShippingMethods\ProvinceAndMunicipalityShippingMethod;
@@ -80,6 +82,9 @@ class ShipmentServiceProvider extends ServiceProvider
         $this->app->afterResolving(InvoiceDataManager::class, function (InvoiceDataManager $manager) {
             $manager->register(new ShipmentInvoiceDataProvider($this->app->make(ShippingMethodsManager::class)));
         });
+
+        // Register user anonymization hooks
+        $this->registerUserAnonymizationHooks();
     }
 
     /**
@@ -179,6 +184,29 @@ class ShipmentServiceProvider extends ServiceProvider
     protected function registerPolicies(): void
     {
         Gate::policy(Beneficiary::class, BeneficiaryPolicy::class);
+    }
+
+    /**
+     * Register hooks for user anonymization
+     */
+    protected function registerUserAnonymizationHooks(): void
+    {
+        $this->app->afterResolving(PackageHookManager::class, function (PackageHookManager $manager) {
+            // Listen to user.before_anonymize hook to clean up shipment-related data
+            $manager->register('user.before_anonymize', function ($data, $context) {
+                $userId = $context['user_id'] ?? null;
+
+                if ($userId) {
+                    // Delete all user addresses
+                    Address::where('user_id', $userId)->delete();
+
+                    // Delete all user beneficiaries
+                    Beneficiary::where('user_id', $userId)->delete();
+                }
+
+                return $data;
+            }, 10);
+        });
     }
 
     protected function registerValidationRules(): void
