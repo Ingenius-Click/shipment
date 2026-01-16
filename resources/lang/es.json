@@ -11,5 +11,18 @@
     "Pickup Address": "Dirección de Recogida",
     "Local Pickup": "Recogida Local",
     "Home Delivery": "Entrega a Domicilio",
-    "Province and Municipality": "Provincia y Municipio"
+    "Province and Municipality": "Provincia y Municipio",
+    "No shipping rate found for the given province and municipality.": "No se encontró tarifa de envío para la provincia y municipio indicados.",
+    "Shipping Zones": "Zonas de Envío",
+    "Configure shipping costs for each province and municipality. Set costs at the province level to apply to all municipalities, or set individual municipality costs to override.": "Configure los costos de envío para cada provincia y municipio. Establezca costos a nivel de provincia para aplicar a todos los municipios, o establezca costos individuales por municipio para sobrescribir.",
+    "Zone ID": "ID de Zona",
+    "Zone Name": "Nombre de Zona",
+    "Enter cost": "Ingrese el costo",
+    "Leave empty to inherit from parent zone": "Deje vacío para heredar de la zona padre",
+    "Province": "Provincia",
+    "Select province": "Seleccione provincia",
+    "Municipality": "Municipio",
+    "Select municipality": "Seleccione municipio",
+    "The address where customers can pick up their orders.": "La dirección dónde los clientes pueden recoger sus pedidos",
+    "Enter the pickup address": "Introduce la dirección de recogida"
 }

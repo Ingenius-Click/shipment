@@ -50,6 +50,21 @@ class LocalPickupMethod extends AbstractShippingMethod
         ];
     }
 
+    public function configFormDataSchema(): array
+    {
+        return [
+            'pickup_address' => [
+                'label' => __('Pickup Address'),
+                'type' => 'text',
+                'rules' => $this->configDataRules()['pickup_address'],
+                'description' => __('The address where customers can pick up their orders.'),
+                'placeholder' => __('Enter the pickup address'),
+                'group' => 'location',
+                'order' => 1,
+            ],
+        ];
+    }
+
     public function renderFormData(): array
     {
         return [

@@ -54,7 +54,7 @@ class ShippingMethodsController extends Controller
         return Response::api(data: [
             'id' => $shippingMethod->getId(),
             'name' => $shippingMethod->getName(),
-            'config_data_rules' => $shippingMethod->configDataRules(),
+            'config_data_schema' => $shippingMethod->configFormDataSchema(),
             'config_data' => $shippingMethod->getConfigData(),
             'config_external_data' => $shippingMethod->configExternalData(),
         ], message: 'Shipping method fetched sucessfully');

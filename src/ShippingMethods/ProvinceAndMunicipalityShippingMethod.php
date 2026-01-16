@@ -93,6 +93,43 @@ class ProvinceAndMunicipalityShippingMethod extends AbstractShippingMethod
         ];
     }
 
+    public function configFormDataSchema(): array {
+        return [
+            'zones' => [
+                'label' => __('Shipping Zones'),
+                'type' => 'zone-cost-table',
+                'rules' => $this->configDataRules()['zones'],
+                'description' => __('Configure shipping costs for each province and municipality. Set costs at the province level to apply to all municipalities, or set individual municipality costs to override.'),
+                'group' => 'zones',
+                'order' => 1,
+                'fields' => [
+                    'id' => [
+                        'label' => __('Zone ID'),
+                        'type' => 'hidden',
+                        'rules' => $this->configDataRules()['zones.*.id'],
+                    ],
+                    'name' => [
+                        'label' => __('Zone Name'),
+                        'type' => 'text',
+                        'rules' => $this->configDataRules()['zones.*.name'],
+                        'disabled' => true,
+                    ],
+                    'cost' => [
+                        'label' => __('Shipping Cost'),
+                        'type' => 'number',
+                        'rules' => $this->configDataRules()['zones.*.cost'],
+                        'placeholder' => __('Enter cost'),
+                        'description' => __('Leave empty to inherit from parent zone'),
+                        'attributes' => [
+                            'min' => 0,
+                            'step' => '0.01',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
     public function renderFormData(): array {
         // Get active municipalities
         $activeMunicipalities = Zone::active()->municipalities()->with('parent')->get();

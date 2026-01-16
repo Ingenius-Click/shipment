@@ -117,6 +117,10 @@ abstract class AbstractShippingMethod implements Arrayable, Jsonable, JsonSerial
         return [];
     }
 
+    public function configFormDataSchema(): array {
+        return [];
+    }
+
     public function configExternalData(): array {
         return [];
     }
