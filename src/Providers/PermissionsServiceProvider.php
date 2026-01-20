@@ -52,8 +52,8 @@ class PermissionsServiceProvider extends ServiceProvider {
             'View zones',
             $this->packageName,
             'tenant',
-            'View zones',
-            'Zones'
+            __('shipment::permissions.display_names.view_zones'),
+            __('shipment::permissions.groups.zones')
         );
 
         $permissionsManager->register(
@@ -61,8 +61,8 @@ class PermissionsServiceProvider extends ServiceProvider {
             'Activate zones',
             $this->packageName,
             'tenant',
-            'Activate zones',
-            'Zones'
+            __('shipment::permissions.display_names.activate_zones'),
+            __('shipment::permissions.groups.zones')
         );
 
         // Shipping Methods permissions
@@ -71,8 +71,8 @@ class PermissionsServiceProvider extends ServiceProvider {
             'View shipping methods',
             $this->packageName,
             'tenant',
-            'View shipping methods',
-            'Shipping Methods'
+            __('shipment::permissions.display_names.view_shipping_methods'),
+            __('shipment::permissions.groups.shipping_methods')
         );
 
         $permissionsManager->register(
@@ -80,8 +80,8 @@ class PermissionsServiceProvider extends ServiceProvider {
             'View shipping method',
             $this->packageName,
             'tenant',
-            'View shipping method',
-            'Shipping Methods'
+            __('shipment::permissions.display_names.view_shipping_method'),
+            __('shipment::permissions.groups.shipping_methods')
         );
 
         $permissionsManager->register(
@@ -89,8 +89,8 @@ class PermissionsServiceProvider extends ServiceProvider {
             'Configure shipping method',
             $this->packageName,
             'tenant',
-            'Configure shipping method',
-            'Shipping Methods'
+            __('shipment::permissions.display_names.configure_shipping_method'),
+            __('shipment::permissions.groups.shipping_methods')
         );
     }
 
