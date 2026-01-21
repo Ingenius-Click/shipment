@@ -67,11 +67,6 @@ class ShipmentInvoiceDataProvider implements InvoiceDataProviderInterface
             $shippingProperties[__('Shipping Method')] = __($shipment->shipping_method_id);
         }
 
-        // Add tracking number if available
-        if ($shipment->tracking_number) {
-            $shippingProperties[__('Tracking Number')] = $shipment->tracking_number;
-        }
-
         // Add shipping cost
         $shippingProperties[__('Shipping Cost')] = $shippingCost ?? '-';
 

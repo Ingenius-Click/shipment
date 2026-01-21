@@ -249,7 +249,6 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
 
         $orderArray['shipment'] = [
             'id' => $shipment->id,
-            'tracking_number' => $shipment->tracking_number,
             'price' => $shipment->base_amount,
             'price_converted' => $priceConverted,
             'price_formatted' => CurrencyServices::formatCurrency($priceConverted, $order->currency),
