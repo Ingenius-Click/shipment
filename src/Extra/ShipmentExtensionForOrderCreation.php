@@ -97,18 +97,39 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
             $method = $this->shippingStrategyManager->getLocalPickupStrategy();
         }
 
-        // Calculate shipping cost
-        $calculationData = $method->calculate($validatedData);
-        $originalPrice = $calculationData->price;
+        // Check for shipping price override (used in manual invoices)
+        // Note: shipping_price_override is set internally by CreateOrderAction, not from request data
+        $shippingPriceOverride = $context['shipping_price_override'] ?? null;
 
-        // Calculate shipping discount if any
-        $shippingDiscountResult = $this->calculateShippingDiscount($originalPrice, $context);
-        $realPrice = $originalPrice - $shippingDiscountResult['total_discount'];
+        if ($shippingPriceOverride !== null) {
+            // Use override price directly, skip calculation and discounts
+            $originalPrice = $shippingPriceOverride;
+            $realPrice = $shippingPriceOverride;
+            $shippingDiscountResult = ['total_discount' => 0, 'applied_discounts' => []];
+            $calculationData = (object) [
+                'price' => $shippingPriceOverride,
+                'base_currency_code' => $order->getBaseCurrency(),
+                'is_manual_override' => true,
+            ];
+            $data = [
+                'calculation_data' => $calculationData,
+                'shipping_discounts' => [],
+                'is_manual_override' => true,
+            ];
+        } else {
+            // Calculate shipping cost normally
+            $calculationData = $method->calculate($validatedData);
+            $originalPrice = $calculationData->price;
 
-        $data = [
-            'calculation_data' => $calculationData,
-            'shipping_discounts' => $shippingDiscountResult['applied_discounts'],
-        ];
+            // Calculate shipping discount if any
+            $shippingDiscountResult = $this->calculateShippingDiscount($originalPrice, $context);
+            $realPrice = $originalPrice - $shippingDiscountResult['total_discount'];
+
+            $data = [
+                'calculation_data' => $calculationData,
+                'shipping_discounts' => $shippingDiscountResult['applied_discounts'],
+            ];
+        }
 
         // Create shipment
         $shipment = Shipment::create([

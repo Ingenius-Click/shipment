@@ -23,7 +23,7 @@ class ShippingMethodsController extends Controller
 {
     use AuthorizesRequests;
 
-    public function actives(Request $request, ShippingMethodsManager $shippingMethodsManager): JsonResponse
+    public function actives(Request $request, ShippingStrategyManager $shippingStrategyManager): JsonResponse
     {
         $shippingTypes = implode(',', array_map(fn($type) => $type->value, \Ingenius\Shipment\Enums\ShippingTypes::cases()));
 
@@ -31,7 +31,26 @@ class ShippingMethodsController extends Controller
             'type' => "nullable|in:$shippingTypes"
         ]);
 
-        $shippingMethods = $shippingMethodsManager->getActivesShippingMethods($validated['type'] ?? '');
+        $shippingMethods = [];
+        $typeFilter = $validated['type'] ?? null;
+
+        // Get local pickup method if enabled and matches filter (or no filter)
+        if (!$typeFilter || $typeFilter === \Ingenius\Shipment\Enums\ShippingTypes::LOCAL_PICKUP->value) {
+            try {
+                $shippingMethods[] = $shippingStrategyManager->getLocalPickupStrategy();
+            } catch (\Exception $e) {
+                // Local pickup not enabled or not configured
+            }
+        }
+
+        // Get home delivery method if enabled and matches filter (or no filter)
+        if (!$typeFilter || $typeFilter === \Ingenius\Shipment\Enums\ShippingTypes::HOME_DELIVERY->value) {
+            try {
+                $shippingMethods[] = $shippingStrategyManager->getHomeDeliveryStrategy();
+            } catch (\Exception $e) {
+                // Home delivery not enabled or not configured
+            }
+        }
 
         return Response::api(message: 'Shipping methods fetched successfully', data: $shippingMethods);
     }

@@ -178,6 +178,21 @@ class ProvinceAndMunicipalityShippingMethod extends AbstractShippingMethod
                 'required' => true,
                 'disabled' => false,
                 'options' => $municipalitiesOptions->toArray(),
+                'options_modifiers' => [
+                    [
+                        'type' => 'filter',
+                        'field' => 'province',
+                        'operator' => '=',
+                        'value_field' => 'province',
+                    ]
+                ],
+                'conditions' => [
+                    [
+                        'value_field' => 'province',
+                        'operator' => '!=',
+                        'value' => null,
+                    ]
+                ],
             ]
         ];
     }

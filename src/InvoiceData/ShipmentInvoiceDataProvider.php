@@ -68,7 +68,7 @@ class ShipmentInvoiceDataProvider implements InvoiceDataProviderInterface
         }
 
         // Add shipping cost
-        $shippingProperties[__('Shipping Cost')] = $shippingCost ?? '-';
+        $shippingProperties[__('Shipping Cost')] = CurrencyServices::formatCurrency((($shipment->base_amount) * $shipment->exchange_rate), $shipment->currency_code) ?? '-';
 
         $sections[] = new InvoiceDataSection(__('Shipping Information'), $shippingProperties, 25);
 
