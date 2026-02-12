@@ -10,7 +10,6 @@ use Ingenius\Core\Helpers\AuthHelper;
 use Ingenius\Core\Http\Controllers\Controller;
 use Ingenius\Core\Services\PackageHookManager;
 use Ingenius\Shipment\Constants\ShippingMethodsPermissions;
-use Ingenius\Shipment\Exceptions\ShippingMethodNotActiveException;
 use Ingenius\Shipment\Http\Requests\CalculateShippingCostRequest;
 use Ingenius\Shipment\Http\Requests\ConfigureShippingMethodRequest;
 use Ingenius\Shipment\Http\Requests\SelectShippingMethodRequest;
@@ -53,6 +52,21 @@ class ShippingMethodsController extends Controller
         }
 
         return Response::api(message: 'Shipping methods fetched successfully', data: $shippingMethods);
+    }
+
+    public function availablesByType(Request $request, ShippingMethodsManager $manager): JsonResponse {
+        $shippingTypes = implode(',', array_map(fn($type) => $type->value, \Ingenius\Shipment\Enums\ShippingTypes::cases()));
+
+        $validated = $request->validate([
+            'type' => "required|in:$shippingTypes"
+        ]);
+
+        $typeFilter = $validated['type'];
+
+        return Response::api(
+            message: "Available shipping methods of type {$typeFilter} fetched successfully",
+            data: $manager->getActivesShippingMethods($typeFilter)
+        );
     }
 
     public function index(Request $request, ShippingMethodsManager $shippingMethodsManager): JsonResponse 

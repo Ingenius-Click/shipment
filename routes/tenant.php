@@ -29,6 +29,7 @@ Route::middleware([
         Route::post('calculate-shipping-cost', [ShippingMethodsController::class, 'calculateShippingCost'])->name('shipping-methods.calculate-shipping-cost');
 
         Route::get('shipping-methods/actives', [ShippingMethodsController::class, 'actives'])->name('shipping-methods.actives')->middleware('tenant.has.feature:list-shipping-methods');
+        Route::get('shipping-methods/availables', [ShippingMethodsController::class, 'availablesByType'])->name('shipping-methods.availables')->middleware('tenant.has.feature:list-shipping-methods');
 
         Route::middleware('tenant.user')->group(function () {
             Route::get('shipping-methods', [ShippingMethodsController::class, 'index'])->name('shipping-methods.index')->middleware('tenant.has.feature:list-shipping-methods');
