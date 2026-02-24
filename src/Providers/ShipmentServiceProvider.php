@@ -89,6 +89,9 @@ class ShipmentServiceProvider extends ServiceProvider
 
         // Register user anonymization hooks
         $this->registerUserAnonymizationHooks();
+
+        // Register shipping cost hook
+        $this->registerShippingCostHook();
     }
 
     /**
@@ -182,6 +185,32 @@ class ShipmentServiceProvider extends ServiceProvider
     protected function registerPolicies(): void
     {
         Gate::policy(Beneficiary::class, BeneficiaryPolicy::class);
+    }
+
+    /**
+     * Register the order.shipping_cost hook
+     */
+    protected function registerShippingCostHook(): void
+    {
+        $this->app->afterResolving(PackageHookManager::class, function (PackageHookManager $manager) {
+            $manager->register('order.shipping_cost', function ($cost, $context) {
+                $order = $context['order'] ?? null;
+
+                if (!$order) {
+                    return $cost;
+                }
+
+                $shipment = \Ingenius\Shipment\Models\Shipment::where('shippable_id', $order->id)
+                    ->where('shippable_type', get_class($order))
+                    ->first();
+
+                if ($shipment) {
+                    return $cost + (int) round($shipment->base_amount * $order->exchange_rate);
+                }
+
+                return $cost;
+            }, 10);
+        });
     }
 
     /**
