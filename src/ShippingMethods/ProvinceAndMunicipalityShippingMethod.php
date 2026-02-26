@@ -2,6 +2,7 @@
 
 namespace Ingenius\Shipment\ShippingMethods;
 
+use Ingenius\Coins\Services\CurrencyServices;
 use Ingenius\Shipment\Enums\ShippingTypes;
 use Ingenius\Shipment\Exceptions\ShippingCalculationException;
 use Ingenius\Shipment\Features\ProvinceAndMunicipalityMethodFeature;
@@ -33,7 +34,7 @@ class ProvinceAndMunicipalityShippingMethod extends AbstractShippingMethod
         });
 
         if ($munValue && isset($munValue['cost'])) {
-            return new Response\CalculationResponse($munValue['cost'] * 100, 'USD');
+            return new Response\CalculationResponse($munValue['cost'] * 100, CurrencyServices::getBaseCurrencyShortName());
         }
 
         $provValue = array_find($zones, function ($zone) use ($data) {
@@ -41,7 +42,7 @@ class ProvinceAndMunicipalityShippingMethod extends AbstractShippingMethod
         });
 
         if ($provValue) {
-            return new Response\CalculationResponse($provValue['cost'] * 100, 'USD');
+            return new Response\CalculationResponse($provValue['cost'] * 100, CurrencyServices::getBaseCurrencyShortName());
         }
 
         throw new ShippingCalculationException(__('No shipping rate found for the given province and municipality.'));

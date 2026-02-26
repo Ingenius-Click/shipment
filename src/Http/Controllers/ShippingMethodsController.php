@@ -6,6 +6,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
+use Ingenius\Coins\Services\CurrencyServices;
 use Ingenius\Core\Helpers\AuthHelper;
 use Ingenius\Core\Http\Controllers\Controller;
 use Ingenius\Core\Services\PackageHookManager;
@@ -169,8 +170,14 @@ class ShippingMethodsController extends Controller
         // Add currency metadata to data
         $data['currency'] = get_currency_metadata();
 
+        // Convert cost to current currency
+        $convertedCost = new \Ingenius\Shipment\ShippingMethods\Response\CalculationResponse(
+            convert_currency($cost->price),
+            get_current_currency(),
+        );
+
         return Response::api(message: 'Shipping cost calculated successfully', data: [
-            'shipping_cost' => $cost,  // Keep base cost for calculations
+            'shipping_cost' => $convertedCost,
             'shipping_cost_data' => $data
         ]);
     }
