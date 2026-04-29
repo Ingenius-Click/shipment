@@ -14,12 +14,15 @@ class ShippingMethodData extends Model
         'shipping_method_id',
         'name',
         'calculation_data',
-        'active'
+        'active',
+        'is_external',
+        'external_payment_instructions',
     ];
 
     protected $casts = [
         'calculation_data' => 'array',
         'active' => 'boolean',
+        'is_external' => 'boolean',
     ];
 
     public function __construct(array $attributes = [])

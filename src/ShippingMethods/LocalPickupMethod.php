@@ -29,6 +29,11 @@ class LocalPickupMethod extends AbstractShippingMethod
         return ShippingTypes::LOCAL_PICKUP;
     }
 
+    public function canBeExternal(): bool
+    {
+        return false;
+    }
+
     public function calculate(array $data): CalculationResponse
     {
         return new CalculationResponse(0, 'USD');

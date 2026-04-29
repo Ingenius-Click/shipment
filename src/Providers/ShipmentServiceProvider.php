@@ -204,7 +204,7 @@ class ShipmentServiceProvider extends ServiceProvider
                     ->where('shippable_type', get_class($order))
                     ->first();
 
-                if ($shipment) {
+                if ($shipment && !$shipment->is_external) {
                     return $cost + (int) round($shipment->base_amount * $order->exchange_rate);
                 }
 

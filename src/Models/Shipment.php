@@ -24,10 +24,13 @@ class Shipment extends Model
         'currency_code',
         'exchange_rate',
         'base_amount',
+        'is_external',
+        'external_payment_instructions',
         'data',
     ];
 
     protected $casts = [
         'data' => 'array',
+        'is_external' => 'boolean',
     ];
 }

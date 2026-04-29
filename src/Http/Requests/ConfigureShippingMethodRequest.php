@@ -15,6 +15,8 @@ class ConfigureShippingMethodRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'is_external' => 'sometimes|boolean',
+            'external_payment_instructions' => 'nullable|string|required_if:is_external,true',
             ...$this->shipping_method_id ? $this->getRules() : [],
         ];
     }

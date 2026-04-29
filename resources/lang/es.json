@@ -24,5 +24,7 @@
     "Municipality": "Municipio",
     "Select municipality": "Seleccione municipio",
     "The address where customers can pick up their orders.": "La dirección dónde los clientes pueden recoger sus pedidos",
-    "Enter the pickup address": "Introduce la dirección de recogida"
+    "Enter the pickup address": "Introduce la dirección de recogida",
+    "External Payment Instructions": "Instrucciones de Pago Externo",
+    "(External payment - paid on delivery, not included in invoice total)": "(Pago externo - pagado a la entrega, no incluido en el total de la factura)"
 }

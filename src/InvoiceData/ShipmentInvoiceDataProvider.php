@@ -68,7 +68,17 @@ class ShipmentInvoiceDataProvider implements InvoiceDataProviderInterface
         }
 
         // Add shipping cost
-        $shippingProperties[__('Shipping Cost')] = CurrencyServices::formatCurrency((($shipment->base_amount) * $shipment->exchange_rate), $shipment->currency_code) ?? '-';
+        $shippingCostFormatted = CurrencyServices::formatCurrency((($shipment->base_amount) * $shipment->exchange_rate), $shipment->currency_code) ?? '-';
+
+        if ($shipment->is_external) {
+            $shippingProperties[__('Shipping Cost')] = $shippingCostFormatted . ' ' . __('(External payment - paid on delivery, not included in invoice total)');
+
+            if (!empty($shipment->external_payment_instructions)) {
+                $shippingProperties[__('External Payment Instructions')] = $shipment->external_payment_instructions;
+            }
+        } else {
+            $shippingProperties[__('Shipping Cost')] = $shippingCostFormatted;
+        }
 
         $sections[] = new InvoiceDataSection(__('Shipping Information'), $shippingProperties, 25);
 

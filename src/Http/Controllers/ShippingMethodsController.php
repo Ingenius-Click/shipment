@@ -91,6 +91,9 @@ class ShippingMethodsController extends Controller
             'config_data_schema' => $shippingMethod->configFormDataSchema(),
             'config_data' => $shippingMethod->getConfigData(),
             'config_external_data' => $shippingMethod->configExternalData(),
+            'is_external' => $shippingMethod->getIsExternal(),
+            'external_payment_instructions' => $shippingMethod->getExternalPaymentInstructions(),
+            'can_be_external' => $shippingMethod->canBeExternal(),
         ], message: 'Shipping method fetched sucessfully');
     }
 
@@ -169,6 +172,8 @@ class ShippingMethodsController extends Controller
 
         // Add currency metadata to data
         $data['currency'] = get_currency_metadata();
+        $data['is_external'] = $method->getIsExternal();
+        $data['external_payment_instructions'] = $method->getExternalPaymentInstructions();
 
         // Convert cost to current currency
         $convertedCost = new \Ingenius\Shipment\ShippingMethods\Response\CalculationResponse(
@@ -178,7 +183,9 @@ class ShippingMethodsController extends Controller
 
         return Response::api(message: 'Shipping cost calculated successfully', data: [
             'shipping_cost' => $convertedCost,
-            'shipping_cost_data' => $data
+            'shipping_cost_data' => $data,
+            'is_external' => $method->getIsExternal(),
+            'external_payment_instructions' => $method->getExternalPaymentInstructions(),
         ]);
     }
 }

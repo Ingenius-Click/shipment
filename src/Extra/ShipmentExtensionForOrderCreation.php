@@ -101,6 +101,8 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
         // Note: shipping_price_override is set internally by CreateOrderAction, not from request data
         $shippingPriceOverride = $context['shipping_price_override'] ?? null;
 
+        $isExternal = $method->getIsExternal();
+
         if ($shippingPriceOverride !== null) {
             // Use override price directly, skip calculation and discounts
             $originalPrice = $shippingPriceOverride;
@@ -121,8 +123,13 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
             $calculationData = $method->calculate($validatedData);
             $originalPrice = $calculationData->price;
 
-            // Calculate shipping discount if any
-            $shippingDiscountResult = $this->calculateShippingDiscount($originalPrice, $context);
+            // External shipping is paid outside the system; no discounts apply
+            if ($isExternal) {
+                $shippingDiscountResult = ['total_discount' => 0, 'applied_discounts' => []];
+            } else {
+                $shippingDiscountResult = $this->calculateShippingDiscount($originalPrice, $context);
+            }
+
             $realPrice = $originalPrice - $shippingDiscountResult['total_discount'];
 
             $data = [
@@ -150,6 +157,8 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
             'currency_code' => $order->getCurrency(),
             'exchange_rate' => $order->getExchangeRate(),
             'base_amount' => $realPrice,
+            'is_external' => $isExternal,
+            'external_payment_instructions' => $isExternal ? $method->getExternalPaymentInstructions() : null,
             'data' => $data
         ]);
 
@@ -178,14 +187,18 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
             }
         }
 
-        // Add shipping cost to total (after discounts)
-        $context['total'] = ($context['total'] ?? 0) + $realPrice;
+        // Add shipping cost to total (after discounts) — skipped for external shipping
+        if (!$isExternal) {
+            $context['total'] = ($context['total'] ?? 0) + $realPrice;
+        }
 
         return [
             'amount' => $originalPrice,
             'discounted_amount' => $realPrice,
             'discount_applied' => $shippingDiscountResult['total_discount'],
             'base_currency_code' => $calculationData->base_currency_code,
+            'is_external' => $isExternal,
+            'external_payment_instructions' => $shipment->external_payment_instructions,
             'beneficiary_name' => $shipment->beneficiary_name,
             'beneficiary_email' => $shipment->beneficiary_email,
             'beneficiary_address' => $shipment->beneficiary_address,
@@ -254,7 +267,7 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
         $orderClass = get_class($order);
         $shipment = Shipment::where('shippable_id', $order->id)->where('shippable_type', $orderClass)->first();
 
-        if ($shipment) {
+        if ($shipment && !$shipment->is_external) {
             return $currentSubtotal + $shipment->base_amount;
         }
 
@@ -274,6 +287,8 @@ class ShipmentExtensionForOrderCreation extends BaseOrderExtension
             'price_converted' => $priceConverted,
             'price_formatted' => CurrencyServices::formatCurrency($priceConverted, $order->currency),
             'shipping_method_id' => $shipment->shipping_method_id,
+            'is_external' => (bool) $shipment->is_external,
+            'external_payment_instructions' => $shipment->external_payment_instructions,
             'beneficiary_name' => $shipment->beneficiary_name,
             'beneficiary_email' => $shipment->beneficiary_email,
             'beneficiary_address' => $shipment->beneficiary_address,
